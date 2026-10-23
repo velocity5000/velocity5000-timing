@@ -1,0 +1,19 @@
+/* Start-time correction controls */
+.start-edit-actions {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 7px;
+  margin-top: 8px;
+}
+.start-edit-button {
+  width: 100%;
+  min-height: 40px;
+  padding: 8px 9px;
+  font-size: 12px;
+  margin-top: 0;
+}
+@media (min-width: 650px) {
+  .start-edit-actions {
+    grid-template-columns: 1fr;
+  }
+}

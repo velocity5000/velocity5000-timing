@@ -1,0 +1,83 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <meta name="theme-color" content="#0b1020">
+  <title>Velocity 5000 — Results Review</title>
+  <link rel="stylesheet" href="./style.css">
+  <link rel="stylesheet" href="./review.css">
+</head>
+<body>
+  <div class="app-shell review-shell">
+    <header class="app-header">
+      <div><div class="brand">VELOCITY <span>5000</span></div><div class="header-subtitle">RESULTS VALIDATION & CORRECTION</div></div>
+      <div id="connectionStatus" class="status-pill">NOT CONNECTED</div>
+    </header>
+    <main>
+      <div class="review-title-row">
+        <div class="page-heading">
+          <p class="eyebrow">RACE DIRECTOR WORKSPACE</p>
+          <h1>Review & Correct Results</h1>
+          <p class="muted">Timer1 defaults to Consolidated. Review only the bibs that need attention.</p>
+        </div>
+        <a class="button button-secondary" href="./index.html?screen=timing">← Back to Timing</a>
+      </div>
+
+      <div class="panel review-toolbar">
+        <div class="filter-field"><label for="eventFilter">Event</label><select id="eventFilter"><option value="">All events</option></select></div>
+        <div class="filter-field"><label for="distanceFilter">Distance</label><select id="distanceFilter"><option value="ALL">All distances</option><option>3KM</option><option>5KM</option><option>10KM</option><option>16KM</option></select></div>
+        <div class="filter-field"><label for="statusFilter">Status</label><select id="statusFilter"><option value="ALL">All results</option><option value="ISSUES">Needs attention</option><option value="DUPLICATE_CANDIDATE">Duplicate bibs</option><option value="MISSING_PRIMARY">Missing Timer1</option><option value="INVALID_BIB">Invalid bib</option><option value="EXCLUDED">Excluded</option><option value="VALID">Valid</option></select></div>
+        <div class="filter-field"><label for="categoryFilter">Category</label><select id="categoryFilter"><option value="ALL">All categories</option></select></div>
+        <div class="filter-field"><label for="genderFilter">Gender</label><select id="genderFilter"><option value="ALL">All genders</option></select></div>
+        <div class="review-actions">
+          <button id="refreshButton" class="button button-primary" type="button">↻ Refresh from Sheets</button>
+          <button id="finalizeButton" class="button button-secondary" type="button">Finalize event</button>
+        </div>
+        <p id="statusMessage" class="small muted" aria-live="polite">Loading results…</p>
+        <p id="roleMessage" class="small muted"></p>
+      </div>
+
+      <section class="review-stats" id="stats"></section>
+
+      <section class="panel">
+        <div class="section-heading review-section-heading">
+          <div><h2>Results by bib</h2><p class="small muted">One row per event, distance, and bib. Open Review to compare timer observations.</p></div>
+          <span class="status-pill">RAW OBSERVATIONS PRESERVED</span>
+        </div>
+        <div class="bulk-toolbar">
+          <label class="select-all-label"><input id="selectAllVisible" type="checkbox"> Select visible</label>
+          <div class="bulk-buttons">
+            <button id="bulkTimer1Button" class="button button-secondary" type="button">Apply defaults to selected</button>
+            <button id="bulkExcludeButton" class="button button-secondary" type="button">Exclude selected</button>
+            <button id="bulkRestoreButton" class="button button-secondary" type="button">Restore selected</button>
+          </div>
+          <span id="selectionCount" class="small muted">0 selected</span>
+        </div>
+        <div class="table-scroll">
+          <table class="results-table review-group-table">
+            <thead><tr><th class="checkbox-col">✓</th><th>Status</th><th>Event</th><th>Distance</th><th>Bib</th><th>Name</th><th>Category</th><th>Gender</th><th>Selected time</th><th>Source</th><th>Observations</th><th>Actions</th></tr></thead>
+            <tbody id="groupsBody"><tr><td colspan="12" class="empty-state">Loading…</td></tr></tbody>
+          </table>
+        </div>
+      </section>
+
+      <section class="panel">
+        <div class="section-heading"><div><h2>Consolidated results</h2><p class="small muted">One selected result per event, distance, and bib. Timer1 is preferred when one valid observation exists; otherwise the fastest valid backup is suggested for review.</p></div></div>
+        <div class="table-scroll">
+          <table class="results-table consolidated-table"><thead><tr><th>Status</th><th>Event</th><th>Distance</th><th>Bib</th><th>Name</th><th>Category</th><th>Gender</th><th>Timer</th><th>Elapsed</th><th>Finish time</th></tr></thead><tbody id="consolidatedBody"><tr><td colspan="10" class="empty-state">No data loaded.</td></tr></tbody></table>
+        </div>
+      </section>
+    </main>
+    <footer>VELOCITY 5000 · INTERNAL TIMING SYSTEM · PROVISIONAL UNTIL EXPLICITLY FINALIZED</footer>
+  </div>
+
+  <dialog id="candidateDialog" class="candidate-dialog">
+    <div class="dialog-header"><div><p class="eyebrow">RESULT COMPARISON</p><h2 id="dialogTitle">Review bib</h2><p id="dialogSubtitle" class="small muted"></p></div><button id="closeDialogButton" class="button button-secondary" type="button">Close</button></div>
+    <div id="candidateList" class="candidate-list"></div>
+    <div class="dialog-footer"><span id="candidateSelectionMessage" class="small muted">Choose a candidate to continue.</span><button id="confirmCandidateButton" class="button button-primary" type="button" disabled>Confirm selection</button></div>
+  </dialog>
+
+  <script src="./review.js"></script>
+</body>
+</html>

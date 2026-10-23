@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <meta name="theme-color" content="#111827">
+    <meta name="description" content="Velocity 5000 Race Timing System">
+    <title>Velocity 5000 Timing System</title>
+    <link rel="manifest" href="./manifest.json">
+    <link rel="stylesheet" href="./style.css">
+    <link rel="stylesheet" href="./style-additions.css">
+</head>
+
+<body>
+    <!-- Simple temporary race-day access gate. This is a client-side convenience gate, not strong security. -->
+    <div id="passwordGate" role="dialog" aria-modal="true" aria-labelledby="passwordGateTitle" style="position:fixed;inset:0;z-index:99999;display:flex;align-items:center;justify-content:center;padding:20px;background:rgba(7,12,25,.97);">
+        <form id="passwordGateForm" style="width:min(100%,420px);box-sizing:border-box;padding:28px;border:1px solid #2b3a55;border-radius:16px;background:#151f33;color:#f8fafc;box-shadow:0 20px 60px rgba(0,0,0,.4);font-family:Arial,sans-serif;">
+            <div style="font-weight:900;letter-spacing:1.5px;font-size:22px;margin-bottom:5px;">VELOCITY <span style="color:#f04444;">5000</span></div>
+            <div style="font-size:11px;letter-spacing:2px;color:#a9c2e7;font-weight:700;margin-bottom:24px;">RACE TIMING SYSTEM</div>
+            <h1 id="passwordGateTitle" style="font-size:24px;margin:0 0 8px;">Enter Password to Proceed</h1>
+            <p style="color:#b8c9e2;font-size:14px;margin:0 0 18px;">Authorized race-day access only.</p>
+            <label for="raceAccessPassword" style="display:block;font-size:13px;font-weight:700;margin-bottom:8px;">Password</label>
+            <input id="raceAccessPassword" type="password" autocomplete="current-password" required autofocus style="width:100%;box-sizing:border-box;padding:14px;border-radius:8px;border:1px solid #34435f;background:#0d1628;color:#fff;font-size:16px;margin-bottom:12px;">
+            <p id="passwordGateError" role="alert" style="display:none;color:#ff8d8d;font-size:13px;margin:0 0 12px;">Incorrect password. Please try again.</p>
+            <button type="submit" style="width:100%;border:0;border-radius:8px;background:#f04444;color:white;font-weight:800;font-size:15px;padding:14px;cursor:pointer;">Proceed →</button>
+        </form>
+    </div>
+    <script>
+        (function () {
+            const gate = document.getElementById('passwordGate');
+            const form = document.getElementById('passwordGateForm');
+            const input = document.getElementById('raceAccessPassword');
+            const error = document.getElementById('passwordGateError');
+            const key = 'velocity5000_raceday_access_v1';
+            if (sessionStorage.getItem(key) === 'granted') gate.style.display = 'none';
+            form.addEventListener('submit', function (event) {
+                event.preventDefault();
+                if (input.value === 'Pass1234') {
+                    sessionStorage.setItem(key, 'granted');
+                    gate.style.display = 'none';
+                    error.style.display = 'none';
+                } else {
+                    error.style.display = 'block';
+                    input.value = '';
+                    input.focus();
+                }
+            });
+        })();
+    </script>
+    <div class="app-shell">
+        <header class="app-header">
+            <div>
+                <div class="brand">VELOCITY <span>5000</span></div>
+                <div class="header-subtitle">RACE TIMING SYSTEM</div>
+            </div>
+            <div id="connectionStatus" class="status-pill">LOCAL MODE</div>
+        </header>
+
+        <main>
+            <!-- SETUP SCREEN -->
+            <section id="setupScreen" class="screen">
+                <div class="page-heading">
+                    <p class="eyebrow">RACE DAY OPERATIONS</p>
+                    <h1>Timing Setup</h1>
+                    <p class="muted">Select the event and identify this timing device.</p>
+                </div>
+
+                <div class="panel">
+                    <label for="eventPreset">Event</label>
+                    <select id="eventPreset" aria-describedby="eventPresetHelp">
+                        <option value="2026-TAKBO-PAULINARS" selected>2026 Takbo PauliNars — 2026-TAKBO-PAULINARS</option>
+                    </select>
+                    <p id="eventPresetHelp" class="small muted">This device will use the same event as the other timing devices.</p>
+
+                    <label for="timerRole">Timer assignment</label>
+                    <select id="timerRole">
+                        <option value="Timer1">Timer1 — Primary / All distances</option>
+                        <option value="Timer2">Timer2 — 3KM backup</option>
+                        <option value="Timer3">Timer3 — 5KM backup</option>
+                        <option value="Timer4">Timer4 — 10KM backup</option>
+                        <option value="Timer5">Timer5 — 16KM backup</option>
+                    </select>
+
+                    <label for="deviceLabel">Device label (optional)</label>
+                    <input id="deviceLabel" type="text" placeholder="e.g. Finish Line Laptop 1" maxlength="80">
+
+                    <button id="continueButton" class="button button-primary button-large">
+                        Continue to Timing →
+                    </button>
+
+                    <p class="small muted">
+                        This is a device identification setting, not a security login.
+                    </p>
+                </div>
+            </section>
+
+            <!-- TIMING SCREEN -->
+            <section id="timingScreen" class="screen hidden">
+                <div class="timing-topline">
+                    <div>
+                        <p class="eyebrow" id="timingEventLabel">OTHER</p>
+                        <h1 id="timingRoleLabel">Timer1</h1>
+                        <p class="muted" id="deviceLabelDisplay">Timing device</p>
+                    </div>
+                    <button id="changeSetupButton" class="button button-secondary">Setup</button>
+                </div>
+
+                <div class="panel race-panel">
+                    <div class="section-heading">
+                        <div>
+                            <h2>Race starts</h2>
+                            <p class="small muted">Each distance has its own official start time. Only Timer1 can start, edit, or undo; other timers sync these times automatically.</p>
+                        </div>
+                    </div>
+
+                    <div id="startGrid" class="start-grid"></div>
+                </div>
+
+                <div class="panel entry-panel">
+                    <div class="section-heading">
+                        <div>
+                            <p class="eyebrow">FINISH LINE</p>
+                            <h2>Record finisher</h2>
+                        </div>
+                        <div class="saved-counter">
+                            <strong id="savedCount">0</strong>
+                            <span>saved</span>
+                        </div>
+                    </div>
+
+                    <div class="detected-runner">
+                        <div>
+                            <span class="small muted">Detected distance</span>
+                            <strong id="detectedDistance">—</strong>
+                        </div>
+
+                        <div>
+                            <span class="small muted">Runner</span>
+                            <strong id="detectedRunner">Enter a bib number</strong>
+                        </div>
+
+                        <div>
+                            <span class="small muted">Registration</span>
+                            <strong id="registrationStatus">Waiting for bib</strong>
+                        </div>
+                    </div>
+
+                    <div class="bib-entry-wrap">
+                        <label for="bibInput">Bib number</label>
+                        <input id="bibInput" type="text" inputmode="none" autocomplete="off" autocapitalize="off"
+                            spellcheck="false" placeholder="Enter bib" aria-describedby="entryMessage">
+                    </div>
+
+                    <div id="keypad" class="keypad">
+                        <button type="button" data-key="1">1</button>
+                        <button type="button" data-key="2">2</button>
+                        <button type="button" data-key="3">3</button>
+                        <button type="button" data-key="4">4</button>
+                        <button type="button" data-key="5">5</button>
+                        <button type="button" data-key="6">6</button>
+                        <button type="button" data-key="7">7</button>
+                        <button type="button" data-key="8">8</button>
+                        <button type="button" data-key="9">9</button>
+                        <button type="button" data-key="backspace" class="key-secondary">⌫</button>
+                        <button type="button" data-key="0">0</button>
+                        <button type="button" data-key="enter" class="key-enter">ENTER ↵</button>
+                    </div>
+
+                    <p id="entryMessage" class="entry-message" aria-live="polite">
+                        Ready to record.
+                    </p>
+
+                    <div class="entry-meta">
+                        <div>
+                            <span class="muted small">Pending upload</span>
+                            <strong id="pendingCount">0</strong>
+                        </div>
+
+                        <div>
+                            <span class="muted small">Config status</span>
+                            <strong id="configStatus">Not synchronized</strong>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="panel">
+                    <div class="section-heading">
+                        <div>
+                            <h2>Recent entries</h2>
+                            <p class="small muted">Latest locally saved records.</p>
+                        </div>
+                        <button id="exportButton" class="button button-secondary">Export CSV</button>
+                    </div>
+                    <div id="recentEntries" class="recent-list"></div>
+                </div>
+
+                <div class="bottom-actions">
+                    <button id="resultsButton" class="button button-primary button-large">
+                        View Results Summary
+                    </button>
+                    <button id="submitButton" class="button button-secondary button-large">
+                        Submit Data
+                    </button>
+                </div>
+
+                <p id="syncMessage" class="small muted" aria-live="polite">
+                    Records are saved on this device. Google Sheets synchronization is not connected yet.
+                </p>
+            </section>
+
+            <!-- RESULTS SUMMARY SCREEN -->
+            <section id="resultsScreen" class="screen hidden">
+                <div class="results-topline">
+                    <div>
+                        <p class="eyebrow">LIVE RACE REVIEW</p>
+                        <h1>Results Summary</h1>
+                        <p class="muted">Consolidated rankings and individual timer observations from Google Sheets.</p>
+                    </div>
+                    <button id="backToTimingButton" class="button button-primary">
+                        ← Back to Timing
+                    </button>
+                </div>
+
+                <div class="panel">
+                    <label for="resultsDistance">Distance</label>
+                    <select id="resultsDistance">
+                        <option value="3KM">3KM</option>
+                        <option value="5KM">5KM</option>
+                        <option value="10KM">10KM</option>
+                        <option value="16KM">16KM</option>
+                    </select>
+
+                    <div class="results-refresh-row"><button id="refreshResultsButton" class="button button-primary" type="button">↻ Refresh from Sheets</button><span id="resultsLastRefreshed" class="small muted">Not refreshed yet</span></div>
+                    <label>Results view</label>
+                    <div id="resultsSourceTabs" class="filter-tabs source-tabs" role="group" aria-label="Timer source">
+                        <button type="button" class="filter-tab active" data-source="CONSOLIDATED" aria-pressed="true">Consolidated</button>
+                        <button type="button" class="filter-tab" data-source="ALL" aria-pressed="false">All Timers</button>
+                        <button type="button" class="filter-tab" data-source="Timer1" aria-pressed="false">Timer1</button>
+                        <button type="button" class="filter-tab" data-source="Timer2" aria-pressed="false">Timer2</button>
+                        <button type="button" class="filter-tab" data-source="Timer3" aria-pressed="false">Timer3</button>
+                        <button type="button" class="filter-tab" data-source="Timer4" aria-pressed="false">Timer4</button>
+                        <button type="button" class="filter-tab" data-source="Timer5" aria-pressed="false">Timer5</button>
+                    </div>
+
+                    <label>Category</label>
+                    <div id="resultsCategoryTabs" class="filter-tabs category-tabs" role="group" aria-label="Category filter">
+                        <button type="button" class="filter-tab active" data-category="ALL" aria-pressed="true">All Categories</button>
+                    </div>
+
+                    <label for="resultsGender">Gender</label>
+                    <select id="resultsGender">
+                        <option value="ALL">All genders</option>
+                        <option value="Male">Male</option>
+                        <option value="Female">Female</option>
+                    </select>
+                </div>
+
+                <div class="panel">
+                    <div class="section-heading">
+                        <h2>Current rankings</h2>
+                        <span class="status-pill">PROVISIONAL</span>
+                    </div>
+                    <div id="resultsTableWrap"></div>
+                    <p id="resultsMessage" class="small muted"></p>
+                </div>
+
+                <div class="panel">
+                    <h2>Validation & correction</h2>
+                    <p class="small muted">Review observations from all timer sheets, flag duplicate candidates, and make audited provisional selections.</p>
+                    <a id="reviewDashboardLink" class="button button-primary button-large" href="./review.html?role=Timer1" style="text-decoration:none;">Open Results Validation & Correction →</a>
+                </div>
+
+                <div class="bottom-actions">
+                    <button id="backToTimingButtonBottom" class="button button-primary button-large">
+                        ← Back to Timing
+                    </button>
+                </div>
+            </section>
+        </main>
+
+        <footer>
+            VELOCITY 5000 · INTERNAL TIMING SYSTEM
+        </footer>
+    </div>
+
+    <script src="./app.js"></script>
+</body>
+
+</html>

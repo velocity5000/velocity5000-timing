@@ -1,0 +1,8 @@
+{
+  "name": "Velocity 5000 Timing System",
+  "short_name": "V5000 Timing",
+  "start_url": "./index.html",
+  "display": "standalone",
+  "background_color": "#0b1020",
+  "theme_color": "#0b1020"
+}
